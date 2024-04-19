@@ -11,7 +11,7 @@
 
 ###FC = ifort 
 ###FFLAGS = -O3 -ipo -fpe0 -fno-alias -check all -traceback -static-libcxa -u -warn all
-FC = ftn -I/home/ca-mcusack/hdf5lib/include/ # CHANGE TO YOUR PATH CONTAINING HDF5 LIBRARY IF YOU NEED IT 
+FC = ftn
 FFLAGS = -O3 -fomit-frame-pointer
 
 FOBS = kdtree2.o cell_data.o code_options.o image_arepo.o \
