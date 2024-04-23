@@ -151,15 +151,38 @@ program image_arepo
          end if
       ! case 2: PPV cube of gas mass, in z direction by default
       case(2)
-         ! make PPV cube
-         allocate(image_cube(npixx,npixy,npixz))
-         call makeppv(arepo%ngas,arepo%pos(:,1:arepo%ngas),arepo%vel(:,1:arepo%ngas),arepo%mass(1:arepo%ngas), &
-               arepo%rho(1:arepo%ngas), xmin,xmax,ymin,ymax,zmin,zmax,npixx,npixy,npixz,image_cube)
-         ! write PPV cube in RADMC format
-         write(num, 100) snap_number(1)
-         image_file_name = 'image_ppvdense.out'
-         call writeppv(image_file_name,image_cube,xmin,xmax,ymin,ymax,zmin,zmax,npixx,npixy,npixz)
-         deallocate(image_cube)
+         if (trim(image_quantity) .eq. 'ppv') then
+            ! read snapshot data
+            call read_arepo_snap_type2(snap_stem,snap_number(1))
+            ! make PPV cube
+            allocate(image_cube(npixx,npixy,npixz))
+            call makeppv(arepo%ngas,arepo%pos(:,1:arepo%ngas),arepo%vel(:,1:arepo%ngas),arepo%mass(1:arepo%ngas), &
+                  arepo%rho(1:arepo%ngas), xmin,xmax,ymin,ymax,zmin,zmax,npixx,npixy,npixz,image_cube)
+            ! write PPV cube in RADMC format
+            write(num, 100) snap_number(1)
+            image_file_name = 'image_ppv.out'
+            call writeppv(image_file_name,image_cube,xmin,xmax,ymin,ymax,zmin,zmax,npixx,npixy,npixz)
+            deallocate(image_cube)
+         else if (trim(image_quantity) .eq. 'nhNh') then
+            ! read snapshot data
+            call read_arepo_snap_type2(snap_stem,snap_number(1))
+            nimages = 1
+            print *, 'Allocating image cube of size', npixx, ' by', npixy, 'by', nimages
+            allocate ( image_cube(1:npixx, 1:npixy, 1:nimages) )
+            allocate ( image(1:npixx, 1:npixy) )
+            print *, 'Done.'
+
+            ! make column density map, assign to cells
+            call make_nhnh(arepo%ngas, nimages, arepo%pos(:, 1:arepo%ngas), arepo%rho, arepo%cellsize, &
+                                    xmin, xmax,  ymin, ymax,  zmin, zmax, npixx, npixy, npixz, image_cube)
+            ! deallocate the image cube
+            deallocate(image_cube)
+            deallocate(image)
+
+         else
+            print *, "Image quantity", trim(image_quantity),' is not supported. Feel free to add code!'
+            stop
+         end if
       case default
          write(*,*) 'No rule for image_mode = ', image_mode, '. We better stop!'
          stop
