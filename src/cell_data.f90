@@ -19,7 +19,8 @@ module cell_data
     end type
  
     ! Declare variables we need eveywhere
-    type(arepo_data_type) :: arepo 
+    type(arepo_data_type) :: arepo
+
     character(200) :: input_snapshot
     double precision, parameter ::  udist = 1.0d17
     double precision, parameter ::  umass = 1.991d33
@@ -55,7 +56,7 @@ module cell_data
         write(num, 100) snapshot_number
     100     format(I3.3)
         arepo_file_name = trim(snapshot_stem) // '_' // num // ".hdf5"
-        print *, "Filename: ", arepo_file_name
+        print *, "apricot: Filename: ", arepo_file_name
 
         ! Initialise the library
         call h5open_f(errorID)
@@ -64,7 +65,7 @@ module cell_data
         call h5fopen_f(arepo_file_name, H5F_ACC_RDONLY_F, fileID, errorID)
 
         ! Open the header 
-        print *, "Reading Header"
+        print *, "apricot: Reading Header"
         call h5gopen_f(fileID, "Header", groupID, errorID)
 
         ! Read the data from the header
@@ -88,13 +89,13 @@ module cell_data
         arepo%ntracer = arepo%npart(4)
         arepo%nsink = arepo%npart(6)
         arepo%nreal = arepo%ntotal - arepo%ntracer
-        print *, "Header Read, NPart: ", arepo%ntotal 
+        print *, "apricot: Header Read, NPart: ", arepo%ntotal 
 
         ! Open the particle data
         call h5gopen_f(fileID, "PartType0", groupID, errorID)
 
         ! Read the positions
-        print *, "Reading Positions"
+        print *, "apricot: Reading Positions"
         call h5dopen_f(groupID, "Coordinates", datasetID, errorID)
         call h5dget_space_f(datasetID, spaceID, errorID)
         call h5sget_simple_extent_dims_f(spaceID, data_dims, max_dims, errorID)
@@ -102,14 +103,14 @@ module cell_data
         call h5dread_f(datasetID, H5T_NATIVE_DOUBLE, arepo%pos, data_dims, errorID)
 
         ! Read the velocities 
-        print *, "Reading Velocities"
+        print *, "apricot: Reading Velocities"
         call h5dopen_f(groupID, "Velocities", datasetID, errorID)
         call h5dget_space_f(datasetID, spaceID, errorID)
         allocate(arepo%vel(data_dims(1), data_dims(2)))
         call h5dread_f(datasetID, H5T_NATIVE_DOUBLE, arepo%vel, data_dims, errorID)
 
         ! Read the masses
-        print *, "Reading Masses"
+        print *, "apricot: Reading Masses"
         call h5dopen_f(groupID, "Masses", datasetID, errorID)
         call h5dget_space_f(datasetID, spaceID, errorID)
         call h5sget_simple_extent_dims_f(spaceID, data_dims, max_dims, errorID)
@@ -117,35 +118,35 @@ module cell_data
         call h5dread_f(datasetID, H5T_NATIVE_DOUBLE, arepo%mass, data_dims, errorID)
 
         ! Read the internal energy
-        print *, "Reading Internal Energy"
+        print *, "apricot: Reading Internal Energy"
         call h5dopen_f(groupID, "InternalEnergy", datasetID, errorID)
         call h5dget_space_f(datasetID, spaceID, errorID)
         allocate(arepo%u(data_dims(1)))
         call h5dread_f(datasetID, H5T_NATIVE_DOUBLE, arepo%u, data_dims, errorID)
 
         ! Reading density 
-        print *, "Reading Densities"
+        print *, "apricot: Reading Densities"
         call h5dopen_f(groupID, "Density", datasetID, errorID)
         call h5dget_space_f(datasetID, spaceID, errorID)
         allocate(arepo%rho(data_dims(1)))
         call h5dread_f(datasetID, H5T_NATIVE_DOUBLE, arepo%rho, data_dims, errorID)
 
         ! Reading dust temperatures
-        print *, "Reading Dust Temperatures"
+        print *, "apricot: Reading Dust Temperatures"
         call h5dopen_f(groupID, "DustTemperature", datasetID, errorID)
         call h5dget_space_f(datasetID, spaceID, errorID)
         allocate(arepo%tdust(data_dims(1)))
         call h5dread_f(datasetID, H5T_NATIVE_DOUBLE, arepo%tdust, data_dims, errorID)
 
         ! Reading IDs
-        print *, "Reading IDs"
+        print *, "apricot: Reading IDs"
         call h5dopen_f(groupID, "ParticleIDs", datasetID, errorID)
         call h5dget_space_f(datasetID, spaceID, errorID)
         allocate(arepo%ids(data_dims(1)))
         call h5dread_f(datasetID, H5T_NATIVE_INTEGER, arepo%ids, data_dims, errorID)
 
         ! Reading chemistry
-        print *, "Reading Chemistry"
+        print *, "apricot: Reading Chemistry"
         call h5dopen_f(groupID, "ChemicalAbundances", datasetID, errorID)
         call h5dget_space_f(datasetID, spaceID, errorID)
         call h5sget_simple_extent_dims_f(spaceID, data_dims, max_dims, errorID)
@@ -199,7 +200,7 @@ module cell_data
         write(num, 100) snapshot_number
     100    format(I3.3)
         arepo_file_name = trim(snapshot_stem) // '_' // num
-        write(*,*) 'Opening snaphot file ', arepo_file_name
+        write(*,*) 'apricot: Opening snaphot file ', arepo_file_name
         open(20, file=arepo_file_name, form='unformatted',status='old')
 
         ! Loop over records and store what we find
@@ -209,7 +210,7 @@ module cell_data
             ! branch depending on what's found
             select case (data_tag)
             case ('HEAD')
-                write(*,*) 'Reading header'
+                write(*,*) 'apricot: Reading header'
 
                 ! Read header
                 read(20) arepo%npart, arepo%massarr, arepo%time, unused(1:4), arepo%nall, unused(1:24)
@@ -223,54 +224,54 @@ module cell_data
                 write(*,*) 'Time:', arepo%time
                 write(*,*) 'ngas ', arepo%ngas, ' nsink', arepo%nsink
             case ('POS ')
-                write(*,*) 'Reading positions'
+                write(*,*) 'apricot: Reading positions'
 
                 ! Read variables
                 allocate( arepo%pos(1:3, 1:arepo%nreal) )
                 read(20) arepo%pos
             case ('VEL ')
-                write(*,*) 'Reading velocities'
+                write(*,*) 'apricot: Reading velocities'
                 allocate( arepo%vel(1:3, 1:arepo%nreal) )
                 read(20) arepo%vel
             case ('ID ')
-                write(*,*) 'Reading IDs'
+                write(*,*) 'apricot: Reading IDs'
                 allocate( arepo%ids(1:arepo%nreal) )
                 read(20) arepo%ids
             case ('MASS')
-                write(*,*) 'Reading masses'
+                write(*,*) 'apricot: Reading masses'
                 allocate( arepo%mass(1:arepo%nreal) )
                 read(20) arepo%mass
             case ('U ')
-                write(*,*) 'Reading u'
+                write(*,*) 'apricot: Reading u'
                 allocate( arepo%u(1:arepo%ngas) )
                 read(20) arepo%u
             case ('RHO ')
-                write(*,*) 'Reading densities'
+                write(*,*) 'apricot: Reading densities'
                 allocate( arepo%rho(1:arepo%ngas) )
                 read(20) arepo%rho
             case ('DUST')
-                write(*,*) 'Reading dust temperatures'
+                write(*,*) 'apricot: Reading dust temperatures'
                 allocate( arepo%tdust(1:arepo%ngas) )
                 read(20) arepo%tdust
             case ('CHEM')
-                write(*,*) 'Reading chemistry'
+                write(*,*) 'apricot: Reading chemistry'
                 allocate( arepo%chem(1:9, 1:arepo%ngas) )
                 read(20) arepo%chem
             case default
-                write(*,*) 'No rule for record tag ', data_tag, ' . Skipping!'              
+                write(*,*) 'apricot: No rule for record tag ', data_tag, ' . Skipping!'              
                 read(20)
             end select
             
             ! Read next record tag...
             read(20, IOSTAT=IOstatus) data_tag
         end do
-        write(*,*) 'Reached end of file'
-        write(*,*) 'Min / Max x:', minval( arepo%pos(1, 1:arepo%nreal) ), maxval( arepo%pos(3, 1:arepo%nreal) )
-        write(*,*) 'Min / Max density:',  minval( arepo%rho(1:arepo%ngas) ), maxval( arepo%rho(1:arepo%ngas) )
+        write(*,*) 'apricot: Reached end of file'
+        write(*,*) 'apricot: Min / Max x:', minval( arepo%pos(1, 1:arepo%nreal) ), maxval( arepo%pos(3, 1:arepo%nreal) )
+        write(*,*) 'apricot: Min / Max density:',  minval( arepo%rho(1:arepo%ngas) ), maxval( arepo%rho(1:arepo%ngas) )
         
         ! Clean out sinks if preset, and put them in their own arrays
         if (arepo%nsink .gt. 0) then
-            print *, "Sinks present: removing from arrays"
+            print *, "apricot: Sinks present: removing from arrays"
             
             ! Allocate the sink arrays and copy the data in  
             allocate( arepo%sinkx(1:arepo%nsink) )
@@ -282,8 +283,8 @@ module cell_data
             allocate( arepo%sinkmass(1:arepo%nsink) )
             allocate( arepo%sinkids(1:arepo%nsink) )
             n_not_sink = sum( arepo%npart(1:5) ) - arepo%ntracer
-            print *, "total non-sink items in arrays", n_not_sink
-            print *, "Moving sinks to their own arrays..."
+            print *, "apricot: total non-sink items in arrays", n_not_sink
+            print *, "apricot: Moving sinks to their own arrays..."
             arepo%sinkx(1:arepo%nsink) = arepo%pos(1, n_not_sink+1:n_not_sink+arepo%nsink)
             arepo%sinky(1:arepo%nsink) = arepo%pos(2, n_not_sink+1:n_not_sink+arepo%nsink)
             arepo%sinkz(1:arepo%nsink) = arepo%pos(3, n_not_sink+1:n_not_sink+arepo%nsink)
@@ -292,22 +293,22 @@ module cell_data
             arepo%sinkvz(1:arepo%nsink) = arepo%vel(3, n_not_sink+1:n_not_sink+arepo%nsink)
             arepo%sinkmass(1:arepo%nsink) = arepo%mass(n_not_sink+1:n_not_sink+arepo%nsink)
             arepo%sinkids(1:arepo%nsink) = arepo%ids(n_not_sink+1:n_not_sink+arepo%nsink)
-            print *, 'Done.'
+            print *, 'apricot: Done.'
             
             ! Resize the pos / vel / mass / ids arrays to only include the gas 
             allocate( dummy_1d(1:arepo%ngas) )
             allocate( dummy_2d(1:3, 1:arepo%ngas) )
 
             ! Posisitions
-            print *, "Pos of cell 1", arepo%pos(1, 1), arepo%pos(2, 1), arepo%pos(3, 1)
-            print *, "Pos of cell 2", arepo%pos(1, 2), arepo%pos(2, 2), arepo%pos(3, 2)
+            print *, "apricot: Pos of cell 1", arepo%pos(1, 1), arepo%pos(2, 1), arepo%pos(3, 1)
+            print *, "apricot: Pos of cell 2", arepo%pos(1, 2), arepo%pos(2, 2), arepo%pos(3, 2)
     end if 
 
         ! Make any other arrays that you might need for plotting
         allocate( arepo%cellsize(1:arepo%ngas) )
         arepo%cellsize = (arepo%mass(1:arepo%ngas) / arepo%rho)**(1./3.) 
         if ( allocated(arepo%chem) ) then
-            print *, "Chemistry present, so proving a gas temperature"
+            print *, "apricot: Chemistry present, so proving a gas temperature"
             allocate( arepo%temp(1:arepo%ngas) )
             allocate( yn(1:arepo%ngas) )
             allocate( energy(1:arepo%ngas) )
@@ -322,8 +323,8 @@ module cell_data
         end if
     
         ! Close file
-        print *, 'density, cellsize', arepo%rho(5), arepo%cellsize(5)
-        print *, 'Closing the file reader. Should have everything we need'
+        print *, 'apricot: density, cellsize', arepo%rho(5), arepo%cellsize(5)
+        print *, 'apricot: Closing the file reader. Should have everything we need'
         close(20)
     end subroutine read_arepo_snap_type2
 

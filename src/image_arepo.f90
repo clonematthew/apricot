@@ -17,43 +17,28 @@ program image_arepo
    double precision, allocatable :: image(:, :)
    double precision, allocatable :: image_cube(:, :, :)
    character(len=:), allocatable :: image_file_name
-   integer :: nimages, ic
+   integer :: nimages, ic, sn
    character(3) :: num
    character(2) :: cnum
 
-   ! Say hello
-   write(*,*) "--IMAGE_AREPO--"
-
-   ! Open the options file
-   print *, 'Reading code option from input file...'
+   ! Say hello and read options
+   write(*,*) "apricot: Reading code options from file"
    call read_options
-   print *, 'Done.'
-
-  ! Read in the file based on filetype
-   select case(fileType)
-      ! Type 2 snapshot, with UCLCHEM
-      case(1)
-         call read_arepo_snap_type2(snap_stem, snap_number(1))
-         call read_uclchem_abuns(snap_stem, snap_number(1)) 
-      ! Type 2 snapshot only
-      case(2)
-         call read_arepo_snap_type2(snap_stem, snap_number(1))
-      ! Type 3, hdf5, snapshot only
-      case(3)
-         call read_arepo_snap_type3(snap_stem, snap_number(1))
-   end select
+   print *, 'apricot: Done.'
 
    ! Do stuff depending on options
    select case(image_mode)
       ! Image mode = 1 is just a single image (integrated, such as column, or slice)
       case(1)
+         call fileReader(fileType, snap_stem, snap_number(1))
+
          ! now call different image makers, depending on what we want in the image
          if (trim(image_quantity) .eq. 'column') then
             !
             ! allocate image
-            print *, 'Allocating image array of size', npixx, 'by ', npixy
+            print *, 'apricot: Allocating image array of size', npixx, 'by ', npixy
             allocate ( image(1:npixx, 1:npixy) )
-            print *, 'Done.'
+            print *, 'apricot: Done.'
             !
             ! make the actual image here
             call make_image_arepo(arepo%ngas, arepo%pos(:, 1:arepo%ngas), arepo%rho, arepo%cellsize, & 
@@ -71,10 +56,10 @@ program image_arepo
             !
             ! allocate image *cube*
             nimages = 7
-            print *, 'Allocating image cube of size', npixx, ' by', npixy, 'by', nimages
+            print *, 'apricot: Allocating image cube of size', npixx, ' by', npixy, 'by', nimages
             allocate ( image_cube(1:npixx, 1:npixy, 1:nimages) )
             allocate ( image(1:npixx, 1:npixy) )
-            print *, 'Done.'
+            print *, 'apricot: Done.'
             !
             ! make all the image in this subroutine...
             call make_sgchem_images_arepo(arepo%ngas, nimages, arepo%pos(:, 1:arepo%ngas), arepo%rho, &
@@ -118,10 +103,10 @@ program image_arepo
             !
             ! allocate image *cube* - all chemical species plus column density
             nimages = arepo%nspecies + 1
-            print *, 'Allocating image cube of size', npixx, ' by', npixy, 'by', nimages
+            print *, 'apricot: Allocating image cube of size', npixx, ' by', npixy, 'by', nimages
             allocate ( image_cube(1:npixx, 1:npixy, 1:nimages) )
             allocate ( image(1:npixx, 1:npixy) )
-            print *, 'Done.'
+            print *, 'apricot: Done.'
             !
             ! make all the image in this subroutine...
             call make_uclchem_images_arepo(arepo%ngas, nimages, arepo%nspecies, arepo%pos(:, 1:arepo%ngas), arepo%rho, &
@@ -146,11 +131,13 @@ program image_arepo
             deallocate(image_cube)
             deallocate(image)           
          else
-            print *, "Image quantity", trim(image_quantity),' is not supported. Feel free to add code!'
+            print *, "apricot: Image quantity", trim(image_quantity),' is not supported. Feel free to add code!'
             stop
          end if
       ! case 2: PPV cube of gas mass, in z direction by default
       case(2)
+         call fileReader(fileType, snap_stem, snap_number(1))
+
          if (trim(image_quantity) .eq. 'ppv') then
             ! read snapshot data
             call read_arepo_snap_type2(snap_stem,snap_number(1))
@@ -167,10 +154,10 @@ program image_arepo
             ! read snapshot data
             call read_arepo_snap_type2(snap_stem,snap_number(1))
             nimages = 1
-            print *, 'Allocating image cube of size', npixx, ' by', npixy, 'by', nimages
+            print *, 'apricot: Allocating image cube of size', npixx, ' by', npixy, 'by', nimages
             allocate ( image_cube(1:npixx, 1:npixy, 1:nimages) )
             allocate ( image(1:npixx, 1:npixy) )
-            print *, 'Done.'
+            print *, 'apricot: Done.'
 
             ! make column density map, assign to cells
             call make_nhnh(arepo%ngas, nimages, arepo%pos(:, 1:arepo%ngas), arepo%rho, arepo%cellsize, &
@@ -178,22 +165,78 @@ program image_arepo
             ! deallocate the image cube
             deallocate(image_cube)
             deallocate(image)
-
          else
-            print *, "Image quantity", trim(image_quantity),' is not supported. Feel free to add code!'
+            print *, "apricot: Image quantity", trim(image_quantity),' is not supported. Feel free to add code!'
             stop
          end if
+      ! Case 3: Make a series of images for a movie
+      case(3)
+         if (trim(image_quantity) .eq. "column") then
+            ! Loop through all the snapshots we want to make an image of
+            do sn = snap_number(1), snap_number(2)
+               call fileReader(fileType, snap_stem, sn)
+
+               ! Allocate image
+               print *, 'apricot: Allocating image array of size', npixx, 'by ', npixy
+               allocate ( image(1:npixx, 1:npixy) )
+               print *, 'apricot: Done.'
+               
+               ! Make the actual image here
+               call make_image_arepo(arepo%ngas, arepo%pos(:, 1:arepo%ngas), arepo%rho, arepo%cellsize, & 
+                                       xmin, xmax,  ymin, ymax,  zmin, zmax, npixx, npixy, npixz, image,  &
+                                       xAxis, yAxis, zAxis)
+               ! Write the image.  Format is e.g. 'column_MYSNAPSHOT_034'
+               write(num, 100) sn
+               image_file_name = trim(image_quantity) // '_' // trim(snap_stem) // '_'// num // '.dat'
+               call write_image(image_file_name, xmin, xmax,  ymin, ymax,  zmin, zmax, npixx, npixy, npixz, image)
+               
+               ! Deallocate the image array
+               deallocate(image)
+               
+               ! Deallocate the arepo params
+               deallocate(arepo%pos)
+               deallocate(arepo%vel)
+               deallocate(arepo%chem)
+               deallocate(arepo%mass)
+               deallocate(arepo%u)
+               deallocate(arepo%rho)
+               deallocate(arepo%temp)
+               deallocate(arepo%tdust)
+               deallocate(arepo%cellsize)
+               deallocate(arepo%ids)
+            end do
+         end if
       case default
-         write(*,*) 'No rule for image_mode = ', image_mode, '. We better stop!'
+         write(*,*) 'apricot: No rule for image_mode = ', image_mode, '. We better stop!'
          stop
    end select
 
-
-   !
    ! bye bye...
-   write(*, *) "Done."
+   write(*, *) "apricot: Done."
 
-   !
    ! any format specifiers
    100       format(I3.3)
 end program image_arepo
+
+! Function to read the file based on its type 
+subroutine fileReader(fileType, snap_stem, snap_number)
+   use cell_data
+   implicit none 
+
+   integer :: fileType, snap_number
+   character(200) :: snap_stem
+
+   ! Read in the file based on filetype
+   select case(fileType)
+      ! Type 2 snapshot, with UCLCHEM
+      case(1)
+         call read_arepo_snap_type2(snap_stem, snap_number)
+         call read_uclchem_abuns(snap_stem, snap_number) 
+      ! Type 2 snapshot only
+      case(2)
+         call read_arepo_snap_type2(snap_stem, snap_number)
+      ! Type 3, hdf5, snapshot only
+      case(3)
+         call read_arepo_snap_type3(snap_stem, snap_number)
+   end select  
+end subroutine fileReader

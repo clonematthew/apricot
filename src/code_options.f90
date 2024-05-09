@@ -27,9 +27,14 @@ contains
       ! Read the snapshot stem
       read(10, *) snap_stem
 
-      ! Read image file number
-      allocate(snap_number(1:1))
-      read(10, *) snap_number(1)
+      ! Read in the image filenumber, or the stop and start filenumbers
+      if (image_mode .eq. 1 .or. image_mode .eq. 2) then
+         allocate(snap_number(1:1))
+         read(10, *) snap_number(1)
+      else if (image_mode .eq. 3) then
+         allocate(snap_number(2:1))
+         read(10, *) snap_number(1), snap_number(2)
+      end if
 
       ! Read file type
       read(10, *) fileType
