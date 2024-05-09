@@ -18,6 +18,7 @@ program image_arepo
    double precision, allocatable :: image_cube(:, :, :)
    character(len=:), allocatable :: image_file_name
    integer :: nimages, ic, sn
+   double precision :: dxFrame, dyFrame, dzFrame
    character(3) :: num
    character(2) :: cnum
 
@@ -171,6 +172,11 @@ program image_arepo
          end if
       ! Case 3: Make a series of images for a movie
       case(3)
+         ! Work out the difference in the dimensions we've got and how much to move each frame
+         dxFrame = (xmaxEnd - xmax) / (snap_number(2) - snap_number(1))
+         dyFrame = (ymaxEnd - ymax) / (snap_number(2) - snap_number(1))
+         dzFrame = (zmaxEnd - zmax) / (snap_number(2) - snap_number(1))
+
          if (trim(image_quantity) .eq. "column") then
             ! Loop through all the snapshots we want to make an image of
             do sn = snap_number(1), snap_number(2)
@@ -204,6 +210,14 @@ program image_arepo
                deallocate(arepo%tdust)
                deallocate(arepo%cellsize)
                deallocate(arepo%ids)
+
+               ! Update the limits
+               xmin = xmin + dxFrame
+               xmax = xmax + dxFrame
+               ymin = ymin + dyFrame
+               ymax = ymax + dyFrame
+               zmin = zmin + dzFrame
+               zmax = zmax + dzFrame
             end do
          end if
       case default

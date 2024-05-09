@@ -1,8 +1,8 @@
 module code_options
 
-   double precision :: xmin, xmax
-   double precision :: ymin, ymax
-   double precision :: zmin, zmax
+   double precision :: xmin, xmax, xminEnd, xmaxEnd
+   double precision :: ymin, ymax, yminEnd, ymaxEnd
+   double precision :: zmin, zmax, zminEnd, zmaxEnd
    integer :: npixx, npixy, npixz
    integer :: image_mode, include_sinks, fileType
    character(15) :: image_quantity    
@@ -39,10 +39,16 @@ contains
       ! Read file type
       read(10, *) fileType
 
-      ! Read limits
-      read(10, *) xmin, xmax
-      read(10, *) ymin, ymax
-      read(10, *) zmin, zmax
+      ! Read limits, or start and end limits for a movie
+      if (image_mode .eq. 1 .or. image_mode .eq. 2) then
+         read(10, *) xmin, xmax
+         read(10, *) ymin, ymax
+         read(10, *) zmin, zmax
+      else if (image_mode .eq. 3) then
+         read(10, *) xmin, xmax, xminEnd, xmaxEnd
+         read(10, *) ymin, ymax, yminEnd, ymaxEnd
+         read(10, *) zmin, zmax, zminEnd, zMaxEnd
+      end if
 
       ! Read the pixels of each dimension
       read(10, *) npixx, npixy, npixz
