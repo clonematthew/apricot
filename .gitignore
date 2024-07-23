@@ -1,3 +1,4 @@
+.DS_Store
 imagearepo 
 *.o
 *.mod
@@ -5,6 +6,3 @@ imagearepo
 *.hdf5
 core
 image_arepo_options.dat
-
-
-
