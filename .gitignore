@@ -1,0 +1,10 @@
+imagearepo 
+*.o
+*.mod
+*.dat
+*.hdf5
+core
+image_arepo_options.dat
+
+
+
