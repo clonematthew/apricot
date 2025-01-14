@@ -2,17 +2,18 @@ module cell_data
 
     implicit none
   
+    ! Define the arepo data struct to populate when we read the files
     type :: arepo_data_type
         integer, dimension(6) :: npart, nall, massarr
-        integer :: ngas, nsink, ntracer, ntotal, nreal
+        integer :: ngas, nsink, nzoomtracer, ntracer, ntotal, nreal
         double precision :: time
         double precision, allocatable, dimension(:,:) :: pos, vel, chem
         double precision, allocatable, dimension(:) :: mass, u, rho
         double precision, allocatable, dimension(:) :: temp, tdust, cellsize
-        double precision, allocatable, dimension(:) :: sinkx, sinky, sinkz
-        double precision, allocatable, dimension(:) :: sinkvx, sinkvy, sinkvz
+        double precision, allocatable, dimension(:,:) :: sinkpos, zoompos
+        double precision, allocatable, dimension(:) :: sinkx, sinky, sinkz, sinkvx, sinkvy, sinkvz
         double precision, allocatable, dimension(:) :: sinkmass
-        integer, allocatable, dimension(:) :: ids, sinkids
+        integer, allocatable, dimension(:) :: ids, sinkids, zoomids
         ! UCLCHEM stuff
         integer :: nspecies
         double precision, allocatable, dimension(:,:) :: uclchem
@@ -33,13 +34,13 @@ module cell_data
 
     contains
 
-    subroutine read_arepo_snap_type3(snapshot_stem, snapshot_number)
+    subroutine read_arepo_snap_type3(snapshot_stem, snapshot_number, image_mode)
         use hdf5
         implicit none
 
         ! Assignment of filename variables
         character(*) :: snapshot_stem
-        integer :: snapshot_number
+        integer :: snapshot_number, image_mode
         character(len=:), allocatable :: arepo_file_name
         character(len=3) :: num
 
@@ -86,9 +87,10 @@ module cell_data
         ! Assign variables
         arepo%ntotal = sum(arepo%npart(1:6))
         arepo%ngas = arepo%npart(1)
+        arepo%nzoomtracer = arepo%npart(2)
         arepo%ntracer = arepo%npart(4)
         arepo%nsink = arepo%npart(6)
-        arepo%nreal = arepo%ntotal - arepo%ntracer
+        arepo%nreal = arepo%ntotal - arepo%ntracer - arepo%nzoomtracer
         print *, "apricot: Header Read, NPart: ", arepo%ntotal 
 
         ! Open the particle data
@@ -153,8 +155,59 @@ module cell_data
         allocate(arepo%chem(data_dims(1), data_dims(2)))
         call h5dread_f(datasetID, H5T_NATIVE_DOUBLE, arepo%chem, data_dims, errorID)
 
-        ! Close the file 
+        ! Close the particle data group
         call h5gclose_f(groupID, errorID)
+
+        ! Read the sink data only if we have sinks
+        if (arepo%nsink .gt. 0) then
+            ! Open the sink data group
+            call h5gopen_f(fileID, "PartType5", groupID, errorID)
+
+            ! Read Sink IDs
+            print *, "apricot: Reading Sink IDs"
+            call h5dopen_f(groupID, "ParticleIDs", datasetID, errorID)
+            call h5dget_space_f(datasetID, spaceID, errorID)
+            call h5sget_simple_extent_dims_f(spaceID, data_dims, max_dims, errorID)
+            allocate(arepo%sinkids(data_dims(1)))
+            call h5dread_f(datasetID, H5T_NATIVE_INTEGER, arepo%sinkids, data_dims, errorID)
+
+            ! Read Sink Positions
+            print *, "apricot: Reading Sink Positions"
+            call h5dopen_f(groupID, "Coordinates", datasetID, errorID)
+            call h5dget_space_f(datasetID, spaceID, errorID)
+            call h5sget_simple_extent_dims_f(spaceID, data_dims, max_dims, errorID)
+            allocate(arepo%sinkpos(data_dims(1), data_dims(2)))
+            call h5dread_f(datasetID, H5T_NATIVE_DOUBLE, arepo%sinkpos, data_dims, errorID)
+
+            ! Close the sink data group
+            call h5gclose_f(groupID, errorID)
+        endif
+
+        ! Read the tracer particle data if we're following them
+        if (image_mode .eq. 5) then
+            ! Open the zoom data group
+            call h5gopen_f(fileID, "PartType1", groupID, errorID)
+
+            ! Read Tracer IDs
+            print *, "apricot: Reading Zoom Tracer IDs"
+            call h5dopen_f(groupID, "ParticleIDs", datasetID, errorID)
+            call h5dget_space_f(datasetID, spaceID, errorID)
+            call h5sget_simple_extent_dims_f(spaceID, data_dims, max_dims, errorID)
+            allocate(arepo%zoomids(data_dims(1)))
+            call h5dread_f(datasetID, H5T_NATIVE_INTEGER, arepo%zoomids, data_dims, errorID)
+
+            ! Read Tracer Positions
+            print *, "apricot: Reading Zoom Tracer Positions"
+            call h5dopen_f(groupID, "Coordinates", datasetID, errorID)
+            call h5dget_space_f(datasetID, spaceID, errorID)
+            call h5sget_simple_extent_dims_f(spaceID, data_dims, max_dims, errorID)
+            allocate(arepo%zoompos(data_dims(1), data_dims(2)))
+            call h5dread_f(datasetID, H5T_NATIVE_DOUBLE, arepo%zoompos, data_dims, errorID)
+
+            ! Close the Tracer data group
+            call h5gclose_f(groupID, errorID)
+        end if
+
         call h5fclose_f(fileID, errorID)
 
         ! Calculate the cellsize

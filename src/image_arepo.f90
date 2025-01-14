@@ -17,21 +17,22 @@ program image_arepo
    double precision, allocatable :: image(:, :)
    double precision, allocatable :: image_cube(:, :, :)
    character(len=:), allocatable :: image_file_name
-   integer :: nimages, ic, sn
+   integer :: nimages, ic, sn, si, zi
    double precision :: dxFrame, dyFrame, dzFrame
+   integer :: sinkIndex, tracerIndex
    character(3) :: num
    character(2) :: cnum
 
    ! Say hello and read options
    write(*,*) "apricot: Reading code options from file"
    call read_options
-   print *, 'apricot: Done.'
+   write(*,*) "apricot: Code options read successfully"
 
    ! Do stuff depending on options
    select case(image_mode)
       ! Image mode = 1 is just a single image (integrated, such as column, or slice)
       case(1)
-         call fileReader(fileType, snap_stem, snap_number(1))
+         call fileReader(fileType, snap_stem, snap_number(1), image_mode)
 
          ! now call different image makers, depending on what we want in the image
          if (trim(image_quantity) .eq. 'column') then
@@ -137,7 +138,7 @@ program image_arepo
          end if
       ! case 2: PPV cube of gas mass, in z direction by default
       case(2)
-         call fileReader(fileType, snap_stem, snap_number(1))
+         call fileReader(fileType, snap_stem, snap_number(1), image_mode)
 
          if (trim(image_quantity) .eq. 'ppv') then
             ! read snapshot data
@@ -180,7 +181,7 @@ program image_arepo
          if (trim(image_quantity) .eq. "column") then
             ! Loop through all the snapshots we want to make an image of
             do sn = snap_number(1), snap_number(2)
-               call fileReader(fileType, snap_stem, sn)
+               call fileReader(fileType, snap_stem, sn, image_mode)
 
                ! Allocate image
                print *, 'apricot: Allocating image array of size', npixx, 'by ', npixy
@@ -220,6 +221,116 @@ program image_arepo
                zmax = zmax + dzFrame
             end do
          end if
+      ! Case 4: Follow a sink particle as the centre of the zoom
+      case(4)
+         if (trim(image_quantity) .eq. "column") then
+            ! Loop through all the snapshots we want to make an image of
+            do sn = snap_number(1), snap_number(2)
+               call fileReader(fileType, snap_stem, sn, image_mode)
+
+               ! Find the index of the sink we're following
+               do si = 1, arepo%nsink
+                  if (arepo%sinkids(si) .eq. sinkID) then
+                     sinkIndex = si
+                  end if
+               end do
+
+               ! Update the image dimensions 
+               xmin = arepo%sinkpos(1, sinkIndex) - image_size
+               xmax = arepo%sinkpos(1, sinkIndex) + image_size
+               ymin = arepo%sinkpos(2, sinkIndex) - image_size
+               ymax = arepo%sinkpos(2, sinkIndex) + image_size
+               zmin = arepo%sinkpos(3, sinkIndex) - image_size
+               zmax = arepo%sinkpos(3, sinkIndex) + image_size
+               print *, "apricot: Image Dimensions: ", xmin, xmax, ymin, ymax, zmin, zmax
+
+               ! Allocate image
+               print *, 'apricot: Allocating image array of size', npixx, 'by ', npixy
+               allocate ( image(1:npixx, 1:npixy) )
+               print *, 'apricot: Done.'
+               
+               ! Make the actual image here
+               call make_image_arepo(arepo%ngas, arepo%pos(:, 1:arepo%ngas), arepo%rho, arepo%cellsize, & 
+                                       xmin, xmax,  ymin, ymax,  zmin, zmax, npixx, npixy, npixz, image,  &
+                                       xAxis, yAxis, zAxis)
+               ! Write the image.  Format is e.g. 'column_MYSNAPSHOT_034'
+               write(num, 100) sn
+               image_file_name = trim(image_quantity) // '_' // trim(snap_stem) // '_'// num // '.dat'
+               call write_image(image_file_name, xmin, xmax,  ymin, ymax,  zmin, zmax, npixx, npixy, npixz, image)
+               
+               ! Deallocate the image array
+               deallocate(image)
+               
+               ! Deallocate the arepo params
+               deallocate(arepo%pos)
+               deallocate(arepo%vel)
+               deallocate(arepo%chem)
+               deallocate(arepo%mass)
+               deallocate(arepo%u)
+               deallocate(arepo%rho)
+               deallocate(arepo%temp)
+               deallocate(arepo%tdust)
+               deallocate(arepo%cellsize)
+               deallocate(arepo%ids)
+               deallocate(arepo%sinkids)
+               deallocate(arepo%sinkpos)
+            end do
+         end if
+      ! Case 5: Follow a tracer particle as the centre of the movie
+      case(5) 
+         if (trim(image_quantity) .eq. "column") then
+            ! Loop through all the snapshots we want to make an image of
+            do sn = snap_number(1), snap_number(2)
+               call fileReader(fileType, snap_stem, sn, image_mode)
+
+               ! Find the index of the tracer particle we're following
+               do zi = 1, arepo%nzoomtracer
+                  if (arepo%zoomids(zi) .eq. tracerID) then
+                     tracerIndex = zi
+                  end if
+               end do
+
+               ! Update the image dimensions 
+               xmin = arepo%zoompos(1, tracerIndex) - image_size
+               xmax = arepo%zoompos(1, tracerIndex) + image_size
+               ymin = arepo%zoompos(2, tracerIndex) - image_size
+               ymax = arepo%zoompos(2, tracerIndex) + image_size
+               zmin = arepo%zoompos(3, tracerIndex) - image_size
+               zmax = arepo%zoompos(3, tracerIndex) + image_size
+               print *, "apricot: Image Dimensions: ", xmin, xmax, ymin, ymax, zmin, zmax
+
+               ! Allocate image
+               print *, 'apricot: Allocating image array of size', npixx, 'by ', npixy
+               allocate ( image(1:npixx, 1:npixy) )
+               print *, 'apricot: Done.'
+               
+               ! Make the actual image here
+               call make_image_arepo(arepo%ngas, arepo%pos(:, 1:arepo%ngas), arepo%rho, arepo%cellsize, & 
+                                       xmin, xmax,  ymin, ymax,  zmin, zmax, npixx, npixy, npixz, image,  &
+                                       xAxis, yAxis, zAxis)
+               ! Write the image.  Format is e.g. 'column_MYSNAPSHOT_034'
+               write(num, 100) sn
+               image_file_name = trim(image_quantity) // '_' // trim(snap_stem) // '_'// num // '.dat'
+               call write_image(image_file_name, xmin, xmax,  ymin, ymax,  zmin, zmax, npixx, npixy, npixz, image)
+               
+               ! Deallocate the image array
+               deallocate(image)
+               
+               ! Deallocate the arepo params
+               deallocate(arepo%pos)
+               deallocate(arepo%vel)
+               deallocate(arepo%chem)
+               deallocate(arepo%mass)
+               deallocate(arepo%u)
+               deallocate(arepo%rho)
+               deallocate(arepo%temp)
+               deallocate(arepo%tdust)
+               deallocate(arepo%cellsize)
+               deallocate(arepo%ids)
+               deallocate(arepo%zoomids)
+               deallocate(arepo%zoompos)
+            end do
+         end if
       case default
          write(*,*) 'apricot: No rule for image_mode = ', image_mode, '. We better stop!'
          stop
@@ -233,11 +344,11 @@ program image_arepo
 end program image_arepo
 
 ! Function to read the file based on its type 
-subroutine fileReader(fileType, snap_stem, snap_number)
+subroutine fileReader(fileType, snap_stem, snap_number, imageMode)
    use cell_data
    implicit none 
 
-   integer :: fileType, snap_number
+   integer :: fileType, snap_number, imageMode
    character(200) :: snap_stem
 
    ! Read in the file based on filetype
@@ -251,6 +362,6 @@ subroutine fileReader(fileType, snap_stem, snap_number)
          call read_arepo_snap_type2(snap_stem, snap_number)
       ! Type 3, hdf5, snapshot only
       case(3)
-         call read_arepo_snap_type3(snap_stem, snap_number)
+         call read_arepo_snap_type3(snap_stem, snap_number, imageMode)
    end select  
 end subroutine fileReader
