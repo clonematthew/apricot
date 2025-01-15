@@ -24,7 +24,7 @@
 ! OUT:
 !	image		- (nx, ny) array holding the final image
 !
-subroutine make_image_arepo(n, points, density, cell_size, x0, x1,  y0, y1,  z0, z1, nx, ny, nz, image, xAxis, yAxis, zAxis)
+subroutine makeImageArepo(n, points, density, cell_size, x0, x1,  y0, y1,  z0, z1, nx, ny, nz, image, xAxis, yAxis, zAxis)
    
    ! Load the tree module
    use kdtree2_module
@@ -103,22 +103,20 @@ subroutine make_image_arepo(n, points, density, cell_size, x0, x1,  y0, y1,  z0,
    end select
 
    ! Build the tree
-   write (*,*) 'Building Tree...'
+   write (*,*) "apricot: Building KDTRee."
    tree => kdtree2_create(points,sort=.false.,rearrange=.false.) 
-   write(*, *) 'Done'
+   write(*, *) "apricot: TreeBuild Completed."
 
    ! Set up arrays
-   write(*,*) 'Cleaning image arrays..' 
    image = 0
    nsteps = 0
-   write(*,*) 'Done'
 
    ! Walk the tree
-   write (*,*) 'walking tree to get image'
+   write (*,*) "apricot: Walking tree to get image."
    do j = 1, ny
       ray_point(yAxis) = y0i + (j-1)*dy + 0.5*dy
       write(*, 101, advance='no') creturn, int(real(j) / real(ny) * 100)
-101   format(a, 'Percent complete: ', i3, ' %')
+101   format(a, "apricot: Percent complete: ", i3, " %")
       do i = 1, nx
          ray_point(xAxis) = x0i + (i-1)*dx + 0.5*dx 
 
@@ -147,12 +145,12 @@ subroutine make_image_arepo(n, points, density, cell_size, x0, x1,  y0, y1,  z0,
       end do
    end do
 
-   print *, 'image', image(1, 1), image(nx, ny), image(204, 145)
-   print *, 'Max nz', maxval(nsteps)
-   print *, 'Min nz', minval(nsteps)
-   print *, 'mean nz', sum(nsteps) / real(nx) / real(ny)
+   !print *, 'image', image(1, 1), image(nx, ny), image(204, 145)
+   !print *, 'Max nz', maxval(nsteps)
+   !print *, 'Min nz', minval(nsteps)
+   !print *, 'mean nz', sum(nsteps) / real(nx) / real(ny)
 
    ! This releases memory for the tree 
    call kdtree2_destroy(tree)
 
-end subroutine make_image_arepo
+end subroutine makeImageArepo

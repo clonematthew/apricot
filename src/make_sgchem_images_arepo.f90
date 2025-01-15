@@ -28,7 +28,7 @@
 ! OUT:
 !	image		- (nx, ny, nimages) array holding the final image cube
 !
-subroutine make_sgchem_images_arepo(n, nimages, points, density, chem, tdust, tgas, cell_size, &
+subroutine makeSGChemImagesArepo(n, nimages, points, density, chem, tdust, tgas, cell_size, &
                                     x0, x1,  y0, y1,  z0, z1, nx, ny, nz, image)
    !
    ! load the tree module
@@ -159,5 +159,4 @@ subroutine make_sgchem_images_arepo(n, nimages, points, density, chem, tdust, tg
    ! this releases memory for the tree 
    call kdtree2_destroy(tree)
 
-
-end subroutine make_sgchem_images_arepo
+end subroutine makeSGChemImagesArepo

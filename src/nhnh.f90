@@ -1,4 +1,4 @@
-subroutine make_nhnh(n, nimages, points, density, cell_size, &
+subroutine makeNHNH(n, nimages, points, density, cell_size, &
                                     x0, x1,  y0, y1,  z0, z1, nx, ny, nz, image)
    !
    ! load the tree module
@@ -113,4 +113,4 @@ subroutine make_nhnh(n, nimages, points, density, cell_size, &
 
   close(unit=42)
 
-end subroutine make_nhnh
+end subroutine makeNHNH

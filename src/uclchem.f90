@@ -1,6 +1,6 @@
 ! read UCLCHEM stuff
 subroutine read_uclchem_abuns(snapshot_stem, snapshot_number)
-  use cell_data
+  use cellData
   use kdtree2_module
   use kdtree2_precision_module
 
@@ -83,7 +83,7 @@ subroutine read_uclchem_abuns(snapshot_stem, snapshot_number)
   
 end subroutine read_uclchem_abuns
 
-subroutine make_uclchem_images_arepo(n, nimages, nchem, points, density, chem, cell_size, &
+subroutine makeUCLChemImagesArepo(n, nimages, nchem, points, density, chem, cell_size, &
                                     x0, x1,  y0, y1,  z0, z1, nx, ny, nz, image)
    !
    ! load the tree module
@@ -194,5 +194,4 @@ subroutine make_uclchem_images_arepo(n, nimages, nchem, points, density, chem, c
    ! this releases memory for the tree 
    call kdtree2_destroy(tree)
 
-
-end subroutine make_uclchem_images_arepo
+end subroutine makeUCLChemImagesArepo

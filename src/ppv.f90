@@ -1,4 +1,4 @@
-subroutine makeppv(n,pos,vel,mass,rho,xmin,xmax,ymin,ymax,zmin,zmax,nx,ny,nz,ppvcube)
+subroutine makePPV(n,pos,vel,mass,rho,xmin,xmax,ymin,ymax,zmin,zmax,nx,ny,nz,ppvcube)
 
   implicit none
 
@@ -33,11 +33,11 @@ subroutine makeppv(n,pos,vel,mass,rho,xmin,xmax,ymin,ymax,zmin,zmax,nx,ny,nz,ppv
      ppvcube(ix,iy,iz) = ppvcube(ix,iy,iz) + mass(i)
   end do
 
-end subroutine makeppv
+end subroutine makePPV
 
-subroutine writeppv(filename,ppvcube,xmin,xmax,ymin,ymax,zmin,zmax,nx,ny,nz)
+subroutine writePPV(filename,ppvcube,xmin,xmax,ymin,ymax,zmin,zmax,nx,ny,nz)
 
-  use cell_data
+  use cellData
 
   implicit none
 
@@ -82,4 +82,4 @@ subroutine writeppv(filename,ppvcube,xmin,xmax,ymin,ymax,zmin,zmax,nx,ny,nz)
 
   close(unit=16)
 
-end subroutine writeppv
+end subroutine writePPV

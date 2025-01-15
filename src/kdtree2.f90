@@ -659,12 +659,10 @@ contains
        write (*,*) 'KD_TREE_TRANS: is not an appropriate data structure.'
        stop
     end if
-
-    print *, "Got to here..."
  
     call build_tree(mr)
 
-    print *, 'Done the build_tree'
+    !print *, 'Done the build_tree'
 
     if (present(sort)) then
        mr%sort = sort

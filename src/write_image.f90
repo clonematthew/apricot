@@ -16,10 +16,10 @@
 !       ny 		- num of pixel columns in image
 !	     image	- (nx, ny) array holding the image
 !
-subroutine write_image(image_file_name, x0, x1,  y0, y1,  z0, z1, nx, ny, nz, image)
+subroutine writeImage(image_file_name, x0, x1,  y0, y1,  z0, z1, nx, ny, nz, image)
    ! Access the arepo data to get time, sinks, units, etc.
-   use cell_data
-   use code_options
+   use cellData
+   use codeOptions
  
    implicit none
 
@@ -32,7 +32,7 @@ subroutine write_image(image_file_name, x0, x1,  y0, y1,  z0, z1, nx, ny, nz, im
    integer :: i, j
    character(*) :: image_file_name
 
-   print *, 'Writing image to file ', image_file_name
+   write (*,*) "apricot: Writing image to file ", image_file_name
 
    ! Open file
    open(30, file=image_file_name, access='stream', form='unformatted',status='replace')
@@ -57,4 +57,4 @@ subroutine write_image(image_file_name, x0, x1,  y0, y1,  z0, z1, nx, ny, nz, im
    ! Close the file
    close(30)
    
-end subroutine write_image
+end subroutine writeImage

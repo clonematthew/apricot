@@ -1,76 +1,81 @@
-module code_options
+module codeOptions
 
-   double precision :: xmin, xmax, xminEnd, xmaxEnd
-   double precision :: ymin, ymax, yminEnd, ymaxEnd
-   double precision :: zmin, zmax, zminEnd, zmaxEnd
-   double precision :: image_size
-   integer :: npixx, npixy, npixz
-   integer :: image_mode, include_sinks, fileType
-   character(15) :: image_quantity    
-   character(200) :: snap_stem
-   integer, allocatable :: snap_number(:)
-   integer :: xAxis, yAxis, zAxis
-   integer :: sinkID, tracerID
+   double precision :: xMin, xMax, xMinEnd, xMaxEnd
+   double precision :: yMin, yMax, yMinEnd, yMaxEnd
+   double precision :: zMin, zMax, zMinEnd, zMaxEnd
+   double precision, allocatable :: imageSize(:)
+   integer :: nPixX, nPixY, nPixZ
+   integer :: imageMode, include_sinks, fileType
+   character(15) :: imageQuantity, movieMode   
+   character(200) :: snapStem
+   integer, allocatable :: snapNumber(:)
+   integer :: xAxis, yAxis, zAxis, followID
 
 contains
-   subroutine read_options
+   subroutine readOptions
       ! Open image options file
       open(10, file='image_arepo_options.dat',status='old')
       
       ! Read the image mode
-      read(10, *) image_mode
+      read(10, *) imageMode
 
-      ! Read the type of image we're making
-      read(10, *) image_quantity      
+      ! Read the mode of the image/movie
+      if (imageMode .eq. 1) then
+         read(10, *) imageQuantity
+      else if (imageMode .eq. 2) then
+         read(10, *) movieMode
+      end if  
 
       ! Do we want to keep the sinks?
       read(10, *) include_sinks
 
       ! Read the snapshot stem
-      read(10, *) snap_stem
+      read(10, *) snapStem
 
       ! Read in the image filenumber, or the stop and start filenumbers
-      if (image_mode .eq. 1 .or. image_mode .eq. 2) then
-         allocate(snap_number(1:1))
-         read(10, *) snap_number(1)
-      else if (image_mode .gt. 2) then
-         allocate(snap_number(2:1))
-         read(10, *) snap_number(1), snap_number(2)
+      if (imageMode .eq. 1) then
+         allocate(snapNumber(1:1))
+         read(10, *) snapNumber(1)
+      else if (imageMode .eq. 2) then
+         allocate(snapNumber(2:1))
+         read(10, *) snapNumber(1), snapNumber(2)
       end if
 
       ! Read file type
       read(10, *) fileType
 
       ! Read limits, or start and end limits for a movie
-      if (image_mode .eq. 1 .or. image_mode .eq. 2)  then
-         read(10, *) xmin, xmax
-         read(10, *) ymin, ymax
-         read(10, *) zmin, zmax
-      else if (image_mode .eq. 3) then
-         read(10, *) xmin, xmax, xminEnd, xmaxEnd
-         read(10, *) ymin, ymax, yminEnd, ymaxEnd
-         read(10, *) zmin, zmax, zminEnd, zMaxEnd
-      else if (image_mode .eq. 4 .or. image_mode .eq. 5) then
-         read(10, *) image_size
+      if (imageMode .eq. 1)  then
+         read(10, *) xMin, xMax
+         read(10, *) yMin, yMax
+         read(10, *) zMin, zMax
+      else if (imageMode .eq. 2) then
+         ! Linearly move between two points across the movie (or static if same)
+         if (movieMode .eq. "linear") then
+            read(10, *) xMin, xMax, xMinEnd, xMaxEnd
+            read(10, *) yMin, yMax, yMinEnd, yMaxEnd
+            read(10, *) zMin, zMax, zMinEnd, zMaxEnd
+         ! Follow a sink or tracer particle and show a given radius around it
+         else if (movieMode .eq. "followSink" .or. movieMovie .eq. "followTracer") then
+            allocate(imageSize(2:1))
+            read(10, *) imageSize(1), imageSize(2)
+         end if
       end if
 
       ! Read the pixels of each dimension
-      read(10, *) npixx, npixy, npixz
+      read(10, *) nPixX, nPixY, nPixZ
 
       ! Read the orientation of the axes
       read(10, *) xAxis, yAxis, zAxis
 
-      ! Read the ID of the sink we want to follow
-      if (image_mode .eq. 4) then
-         read(10, *) sinkID
-      end if
-
-      ! Read the ID of the tracer particle we want to follow
-      if (image_mode .eq. 5) then
-         read(10, *) tracerID
-      end if
+      ! Read the ID of the sink or tracer we want to follow
+      if (imageMode .eq. 2) then
+         if (movieMode .eq. "followSink" .or. movieMode .eq. "followTracer") then
+            read(10, *) followID
+         end if
+      end if 
 
       ! Close the options file
       close(10)
-   end subroutine read_options
+   end subroutine readOptions
 end module

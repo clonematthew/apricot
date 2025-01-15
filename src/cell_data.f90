@@ -1,4 +1,4 @@
-module cell_data
+module cellData
 
     implicit none
   
@@ -9,13 +9,13 @@ module cell_data
         double precision :: time
         double precision, allocatable, dimension(:,:) :: pos, vel, chem
         double precision, allocatable, dimension(:) :: mass, u, rho
-        double precision, allocatable, dimension(:) :: temp, tdust, cellsize
+        double precision, allocatable, dimension(:) :: temp, tdust, cellSize
         double precision, allocatable, dimension(:,:) :: sinkpos, zoompos
         double precision, allocatable, dimension(:) :: sinkx, sinky, sinkz, sinkvx, sinkvy, sinkvz
         double precision, allocatable, dimension(:) :: sinkmass
         integer, allocatable, dimension(:) :: ids, sinkids, zoomids
         ! UCLCHEM stuff
-        integer :: nspecies
+        integer :: nSpecies
         double precision, allocatable, dimension(:,:) :: uclchem
     end type
  
@@ -34,13 +34,14 @@ module cell_data
 
     contains
 
-    subroutine read_arepo_snap_type3(snapshot_stem, snapshot_number, image_mode)
+    subroutine read_arepo_snap_type3(snapshot_stem, snapshot_number, movieMode)
         use hdf5
         implicit none
 
         ! Assignment of filename variables
         character(*) :: snapshot_stem
-        integer :: snapshot_number, image_mode
+        character(15) :: movieMode
+        integer :: snapshot_number
         character(len=:), allocatable :: arepo_file_name
         character(len=3) :: num
 
@@ -57,7 +58,7 @@ module cell_data
         write(num, 100) snapshot_number
     100     format(I3.3)
         arepo_file_name = trim(snapshot_stem) // '_' // num // ".hdf5"
-        print *, "apricot: Filename: ", arepo_file_name
+        write(*,*) "apricot: Filename: ", arepo_file_name
 
         ! Initialise the library
         call h5open_f(errorID)
@@ -66,7 +67,7 @@ module cell_data
         call h5fopen_f(arepo_file_name, H5F_ACC_RDONLY_F, fileID, errorID)
 
         ! Open the header 
-        print *, "apricot: Reading Header"
+        write(*,*) "apricot: Reading Header."
         call h5gopen_f(fileID, "Header", groupID, errorID)
 
         ! Read the data from the header
@@ -91,13 +92,13 @@ module cell_data
         arepo%ntracer = arepo%npart(4)
         arepo%nsink = arepo%npart(6)
         arepo%nreal = arepo%ntotal - arepo%ntracer - arepo%nzoomtracer
-        print *, "apricot: Header Read, NPart: ", arepo%ntotal 
+        write(*,*) "apricot: Header Read, NPart: ", arepo%ntotal 
 
         ! Open the particle data
         call h5gopen_f(fileID, "PartType0", groupID, errorID)
 
         ! Read the positions
-        print *, "apricot: Reading Positions"
+        write(*,*) "apricot: Reading Positions."
         call h5dopen_f(groupID, "Coordinates", datasetID, errorID)
         call h5dget_space_f(datasetID, spaceID, errorID)
         call h5sget_simple_extent_dims_f(spaceID, data_dims, max_dims, errorID)
@@ -105,14 +106,14 @@ module cell_data
         call h5dread_f(datasetID, H5T_NATIVE_DOUBLE, arepo%pos, data_dims, errorID)
 
         ! Read the velocities 
-        print *, "apricot: Reading Velocities"
+        write(*,*) "apricot: Reading Velocities."
         call h5dopen_f(groupID, "Velocities", datasetID, errorID)
         call h5dget_space_f(datasetID, spaceID, errorID)
         allocate(arepo%vel(data_dims(1), data_dims(2)))
         call h5dread_f(datasetID, H5T_NATIVE_DOUBLE, arepo%vel, data_dims, errorID)
 
         ! Read the masses
-        print *, "apricot: Reading Masses"
+        write(*,*) "apricot: Reading Masses."
         call h5dopen_f(groupID, "Masses", datasetID, errorID)
         call h5dget_space_f(datasetID, spaceID, errorID)
         call h5sget_simple_extent_dims_f(spaceID, data_dims, max_dims, errorID)
@@ -120,35 +121,35 @@ module cell_data
         call h5dread_f(datasetID, H5T_NATIVE_DOUBLE, arepo%mass, data_dims, errorID)
 
         ! Read the internal energy
-        print *, "apricot: Reading Internal Energy"
+        write(*,*) "apricot: Reading Internal Energy."
         call h5dopen_f(groupID, "InternalEnergy", datasetID, errorID)
         call h5dget_space_f(datasetID, spaceID, errorID)
         allocate(arepo%u(data_dims(1)))
         call h5dread_f(datasetID, H5T_NATIVE_DOUBLE, arepo%u, data_dims, errorID)
 
         ! Reading density 
-        print *, "apricot: Reading Densities"
+        write(*,*) "apricot: Reading Densities."
         call h5dopen_f(groupID, "Density", datasetID, errorID)
         call h5dget_space_f(datasetID, spaceID, errorID)
         allocate(arepo%rho(data_dims(1)))
         call h5dread_f(datasetID, H5T_NATIVE_DOUBLE, arepo%rho, data_dims, errorID)
 
         ! Reading dust temperatures
-        print *, "apricot: Reading Dust Temperatures"
+        write(*,*) "apricot: Reading Dust Temperatures."
         call h5dopen_f(groupID, "DustTemperature", datasetID, errorID)
         call h5dget_space_f(datasetID, spaceID, errorID)
         allocate(arepo%tdust(data_dims(1)))
         call h5dread_f(datasetID, H5T_NATIVE_DOUBLE, arepo%tdust, data_dims, errorID)
 
         ! Reading IDs
-        print *, "apricot: Reading IDs"
+        write(*,*) "apricot: Reading IDs."
         call h5dopen_f(groupID, "ParticleIDs", datasetID, errorID)
         call h5dget_space_f(datasetID, spaceID, errorID)
         allocate(arepo%ids(data_dims(1)))
         call h5dread_f(datasetID, H5T_NATIVE_INTEGER, arepo%ids, data_dims, errorID)
 
         ! Reading chemistry
-        print *, "apricot: Reading Chemistry"
+        write(*,*) "apricot: Reading Chemistry."
         call h5dopen_f(groupID, "ChemicalAbundances", datasetID, errorID)
         call h5dget_space_f(datasetID, spaceID, errorID)
         call h5sget_simple_extent_dims_f(spaceID, data_dims, max_dims, errorID)
@@ -159,12 +160,12 @@ module cell_data
         call h5gclose_f(groupID, errorID)
 
         ! Read the sink data only if we have sinks
-        if (arepo%nsink .gt. 0) then
+        if (arepo%nsink .gt. 0 .and. movieMode .eq. "followSink") then
             ! Open the sink data group
             call h5gopen_f(fileID, "PartType5", groupID, errorID)
 
             ! Read Sink IDs
-            print *, "apricot: Reading Sink IDs"
+            write(*,*) "apricot: Reading Sink IDs."
             call h5dopen_f(groupID, "ParticleIDs", datasetID, errorID)
             call h5dget_space_f(datasetID, spaceID, errorID)
             call h5sget_simple_extent_dims_f(spaceID, data_dims, max_dims, errorID)
@@ -172,7 +173,7 @@ module cell_data
             call h5dread_f(datasetID, H5T_NATIVE_INTEGER, arepo%sinkids, data_dims, errorID)
 
             ! Read Sink Positions
-            print *, "apricot: Reading Sink Positions"
+            write(*,*) "apricot: Reading Sink Positions."
             call h5dopen_f(groupID, "Coordinates", datasetID, errorID)
             call h5dget_space_f(datasetID, spaceID, errorID)
             call h5sget_simple_extent_dims_f(spaceID, data_dims, max_dims, errorID)
@@ -184,12 +185,12 @@ module cell_data
         endif
 
         ! Read the tracer particle data if we're following them
-        if (image_mode .eq. 5) then
+        if (movieMode .eq. "followTracer") then
             ! Open the zoom data group
             call h5gopen_f(fileID, "PartType1", groupID, errorID)
 
             ! Read Tracer IDs
-            print *, "apricot: Reading Zoom Tracer IDs"
+            write(*,*) "apricot: Reading Zoom Tracer IDs."
             call h5dopen_f(groupID, "ParticleIDs", datasetID, errorID)
             call h5dget_space_f(datasetID, spaceID, errorID)
             call h5sget_simple_extent_dims_f(spaceID, data_dims, max_dims, errorID)
@@ -197,7 +198,7 @@ module cell_data
             call h5dread_f(datasetID, H5T_NATIVE_INTEGER, arepo%zoomids, data_dims, errorID)
 
             ! Read Tracer Positions
-            print *, "apricot: Reading Zoom Tracer Positions"
+            write(*,*) "apricot: Reading Zoom Tracer Positions."
             call h5dopen_f(groupID, "Coordinates", datasetID, errorID)
             call h5dget_space_f(datasetID, spaceID, errorID)
             call h5sget_simple_extent_dims_f(spaceID, data_dims, max_dims, errorID)
@@ -210,9 +211,9 @@ module cell_data
 
         call h5fclose_f(fileID, errorID)
 
-        ! Calculate the cellsize
-        allocate(arepo%cellsize(1:arepo%ngas))
-        arepo%cellsize = (arepo%mass(1:arepo%ngas) / arepo%rho)**(1./3.)
+        ! Calculate the cell size
+        allocate(arepo%cellSize(1:arepo%ngas))
+        arepo%cellSize = (arepo%mass(1:arepo%ngas) / arepo%rho)**(1./3.)
 
         ! Calculate the gas temperature
         if (allocated(arepo%chem)) then
@@ -358,8 +359,8 @@ module cell_data
     end if 
 
         ! Make any other arrays that you might need for plotting
-        allocate( arepo%cellsize(1:arepo%ngas) )
-        arepo%cellsize = (arepo%mass(1:arepo%ngas) / arepo%rho)**(1./3.) 
+        allocate( arepo%cellSize(1:arepo%ngas) )
+        arepo%cellSize = (arepo%mass(1:arepo%ngas) / arepo%rho)**(1./3.) 
         if ( allocated(arepo%chem) ) then
             print *, "apricot: Chemistry present, so proving a gas temperature"
             allocate( arepo%temp(1:arepo%ngas) )
@@ -376,9 +377,9 @@ module cell_data
         end if
     
         ! Close file
-        print *, 'apricot: density, cellsize', arepo%rho(5), arepo%cellsize(5)
+        print *, 'apricot: density, cellSize', arepo%rho(5), arepo%cellSize(5)
         print *, 'apricot: Closing the file reader. Should have everything we need'
         close(20)
     end subroutine read_arepo_snap_type2
 
-end module cell_data
+end module cellData
