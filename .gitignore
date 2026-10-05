@@ -1,7 +1,7 @@
 .DS_Store
 imagearepo 
 *.o
-*.mod
+.mod
 *.dat
 *.hdf5
 core
