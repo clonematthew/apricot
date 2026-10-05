@@ -56,7 +56,7 @@ contains
             read(10, *) yMin, yMax, yMinEnd, yMaxEnd
             read(10, *) zMin, zMax, zMinEnd, zMaxEnd
          ! Follow a sink or tracer particle and show a given radius around it
-         else if (movieMode .eq. "followSink" .or. movieMovie .eq. "followTracer") then
+         else if ((movieMode .eq. "followSink") .or. (movieMode .eq. "followTracer")) then
             allocate(imageSize(2:1))
             read(10, *) imageSize(1), imageSize(2)
          end if

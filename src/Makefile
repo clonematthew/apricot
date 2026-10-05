@@ -9,12 +9,8 @@
 
 .SUFFIXES: .f .f90 .o
 
-FC = ifort -lhdf5_fortran
-FFLAGS = -O3 -ipo -fpe0 -fno-alias -check all -traceback -u -warn all
-#FC = ftn 
-#FFLAGS = -O3 -fomit-frame-pointer 
-
-
+FC = gfortran -lhdf5_fortran
+FFLAGS = -O3
 
 FOBS = kdtree2.o cell_data.o code_options.o image_arepo.o \
         write_image.o make_image_arepo.o make_sgchem_images_arepo.o \
@@ -29,4 +25,4 @@ $(EXEC): $(FOBS)
 	$(FC) $(FOBS) $(FFLAGS) -o $(EXEC)
 
 clean:
-	\rm -f *.o *.mod $(EXEC)
+	\rm -f *.o kdtree2.mod kdtree2_module.mod kdtree2_precision_module.mod kdtree2_priority_queue_module.mod celldata.mod codeoptions.mod $(EXEC)

@@ -33,7 +33,7 @@ program imageArepo
         ! Image mode 1, single image
         case(1)
             ! Load the snapshot
-            call fileReader(fileType, snapStem, snapNumber(1), imageMode)
+            call fileReader(fileType, snapStem, snapNumber(1), "noMovieInThisRun")
 
             ! Allocate image array (common to all)
             write(*,*) "apricot: Allocating image array, size ", nPixX, "by", nPixY
@@ -240,7 +240,7 @@ subroutine fileReader(fileType, snapStem, snapNumber, movieMode)
    implicit none 
 
    integer :: fileType, snapNumber
-   character(200) :: snapStem, movieMode
+   character(15) :: snapStem, movieMode
 
    ! Read in the file based on filetype
    select case(fileType)
