@@ -51,7 +51,7 @@ program imageArepo
                                     xAxis, yAxis, zAxis)
 
                 ! Write out the image
-                imageFilename = trim(imageQuantity) // "_" // "column" // "_" // trim(snapStem) // "_" // num // '.dat'
+                imageFilename = trim(imageQuantity) // "_" // trim(snapStem) // "_" // num // '.dat'
                 call writeImage(imageFilename, xMin, xMax, yMin, yMax, zMin, zMax, nPixX, nPixY, nPixZ, image)
 
             else if (trim(imageQuantity) .eq. "sgchem") then
@@ -240,7 +240,8 @@ subroutine fileReader(fileType, snapStem, snapNumber, movieMode)
    implicit none 
 
    integer :: fileType, snapNumber
-   character(15) :: snapStem, movieMode
+   character(200) :: snapStem
+   character(15) :: movieMode
 
    ! Read in the file based on filetype
    select case(fileType)
