@@ -240,7 +240,7 @@ subroutine fileReader(fileType, snapStem, snapNumber, movieMode)
    implicit none 
 
    integer :: fileType, snapNumber
-   character(200) :: snapStem
+   character(*) :: snapStem
    character(15) :: movieMode
 
    ! Read in the file based on filetype
